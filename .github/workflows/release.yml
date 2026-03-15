@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - os: darwin
+            arch: amd64
+            runner: macos-latest
+          - os: darwin
+            arch: arm64
+            runner: macos-latest
+          - os: linux
+            arch: amd64
+            runner: ubuntu-latest
+          - os: linux
+            arch: arm64
+            runner: ubuntu-latest
+          - os: windows
+            arch: amd64
+            runner: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: "0"
+        run: |
+          EXT=""
+          if [ "${{ matrix.os }}" = "windows" ]; then EXT=".exe"; fi
+          go build -ldflags="-s -w" -o "tools-secrets-${{ matrix.os }}-${{ matrix.arch }}${EXT}" ./cmd/
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tools-secrets-${{ matrix.os }}-${{ matrix.arch }}
+          path: tools-secrets-*
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Create tarballs
+        run: |
+          for f in tools-secrets-*; do
+            if [[ "$f" == *.exe ]]; then
+              zip "${f%.exe}.zip" "$f"
+            else
+              chmod +x "$f"
+              tar czf "${f}.tar.gz" "$f"
+            fi
+          done
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.tar.gz
+            *.zip
+          generate_release_notes: true

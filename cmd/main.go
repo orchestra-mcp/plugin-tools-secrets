@@ -2,35 +2,33 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	pluginv1 "github.com/orchestra-mcp/gen-go/orchestra/plugin/v1"
 	"github.com/orchestra-mcp/sdk-go/plugin"
 	"github.com/orchestra-mcp/plugin-tools-secrets/internal"
-	"github.com/orchestra-mcp/plugin-tools-secrets/internal/storage"
+	"github.com/orchestra-mcp/plugin-tools-secrets/internal/store"
 )
 
 func main() {
-	builder := plugin.New("tools.tools-secrets").
+	builder := plugin.New("tools.secrets").
 		Version("0.1.0").
-		Description("tools-secrets tools plugin").
+		Description("Encrypted secrets management — API keys, tokens, passwords, .env variables. AES-256-GCM at rest, shared across workspaces.").
 		Author("Orchestra").
-		Binary("tools-secrets").
-		NeedsStorage("markdown")
+		Binary("tools-secrets")
 
-	adapter := &clientAdapter{}
-	store := storage.NewDataStorage(adapter)
+	secretStore, err := store.NewSecretStore()
+	if err != nil {
+		log.Fatalf("tools.secrets: init store: %v", err)
+	}
 
-	tp := &internal.ToolsPlugin{Storage: store}
-	tp.RegisterTools(builder)
+	sp := &internal.SecretsPlugin{Store: secretStore}
+	sp.RegisterTools(builder)
 
 	p := builder.BuildWithTools()
 	p.ParseFlags()
-	adapter.plugin = p
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -43,18 +41,6 @@ func main() {
 	}()
 
 	if err := p.Run(ctx); err != nil {
-		log.Fatalf("tools.tools-secrets: %v", err)
+		log.Fatalf("tools.secrets: %v", err)
 	}
-}
-
-type clientAdapter struct {
-	plugin *plugin.Plugin
-}
-
-func (a *clientAdapter) Send(ctx context.Context, req *pluginv1.PluginRequest) (*pluginv1.PluginResponse, error) {
-	client := a.plugin.OrchestratorClient()
-	if client == nil {
-		return nil, fmt.Errorf("orchestrator client not connected")
-	}
-	return client.Send(ctx, req)
 }
