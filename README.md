@@ -5,26 +5,20 @@ Encrypted secrets management for [Orchestra MCP](https://github.com/orchestra-mc
 ## Install
 
 ```bash
-go install github.com/orchestra-mcp/plugin-tools-secrets/cmd@latest
-```
-
-Or build from source:
-
-```bash
-make build-tools-secrets
+go get github.com/orchestra-mcp/plugin-tools-secrets
 ```
 
 ## Usage
 
-The plugin is bundled in-process with the Orchestra CLI. No extra configuration needed — secrets tools are available immediately after `orchestra serve`.
+```bash
+# Build
+go build -o bin/tools-secrets ./cmd/
 
-For standalone use, add to `plugins.yaml`:
-
-```yaml
-- id: tools.secrets
-  binary: ./bin/tools-secrets
-  enabled: true
+# Run (started automatically by the orchestrator)
+bin/tools-secrets --workspace=. --orchestrator-addr localhost:9100
 ```
+
+The plugin is also bundled in-process with the Orchestra CLI — secrets tools are available immediately after `orchestra serve`.
 
 ## Tools (8)
 
