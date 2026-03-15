@@ -1,0 +1,23 @@
+{
+    "name": "orchestra-mcp/plugin-tools-secrets",
+    "description": "tools-secrets tools plugin for Orchestra MCP.",
+    "type": "tools",
+    "license": "MIT",
+    "homepage": "https://orchestra-mcp.dev",
+    "support": {
+        "issues": "https://github.com/orchestra-mcp/plugin-tools-secrets/issues",
+        "source": "https://github.com/orchestra-mcp/plugin-tools-secrets"
+    },
+    "require": {
+        "orchestra-mcp/gen-go": "^0.1.0",
+        "orchestra-mcp/sdk-go": "^0.1.0"
+    },
+    "bin": "tools-secrets",
+    "extra": {
+        "plugin-id": "tools.tools-secrets",
+        "provides": ["tools"],
+        "branch-alias": {
+            "dev-master": "0.1.x-dev"
+        }
+    }
+}
